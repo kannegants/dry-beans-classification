@@ -1,0 +1,79 @@
+# =======================================
+# STEP 6 — KNN Classifier with PCA (n=4)
+# =======================================
+
+# ----- Train KNN model -----
+knn_model = KNeighborsClassifier(n_neighbors=5)
+knn_model.fit(X_train_pca, y_train_pca)
+
+# ----- Predictions -----
+y_pred_knn = knn_model.predict(X_test_pca)
+
+# ----- Evaluation -----
+print("\n=== KNN (PCA) Performance Summary ===")
+print("Train Accuracy:", accuracy_score(y_train_pca, knn_model.predict(X_train_pca)))
+print("Test Accuracy:", accuracy_score(y_test_pca, y_pred_knn))
+
+print("\nClassification Report:\n", classification_report(y_test_pca, y_pred_knn))
+
+# Confusion Matrix
+cm_knn = confusion_matrix(y_test_pca, y_pred_knn)
+print("Confusion Matrix:\n", cm_knn)
+
+# ----- Confusion Matrix Heatmap -----
+plt.figure(figsize=(5,4))
+sns.heatmap(cm_knn, annot=True, fmt='d', cmap='Blues')
+plt.title("KNN (with PCA) Confusion Matrix")
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.show()
+
+# =======================================
+# KNN Decision Boundary (2D PCA)
+# =======================================
+
+# Use only the first 2 PCA components for visualization
+pca_2d = PCA(n_components=2)
+X_2d = pca_2d.fit_transform(X_scaled)
+
+# Subsample to speed up plot
+n_plot = min(3000, len(X_2d))
+idx = np.random.choice(len(X_2d), n_plot, replace=False)
+X_plot = X_2d[idx]
+y_plot = y.iloc[idx].values
+
+# Fit KNN on reduced 2D PCA data
+knn_vis = KNeighborsClassifier(n_neighbors=5)
+knn_vis.fit(X_plot, y_plot)
+
+# Create meshgrid
+x_min, x_max = X_plot[:,0].min() - 1, X_plot[:,0].max() + 1
+y_min, y_max = X_plot[:,1].min() - 1, X_plot[:,1].max() + 1
+
+xx, yy = np.meshgrid(
+    np.arange(x_min, x_max, 0.1),
+    np.arange(y_min, y_max, 0.1)
+)
+
+# Predict for each point on the grid
+Z = knn_vis.predict(np.c_[xx.ravel(), yy.ravel()])
+Z = Z.reshape(xx.shape)
+
+# Plot decision boundary
+plt.figure(figsize=(8,6))
+plt.contourf(xx, yy, Z, cmap=plt.cm.coolwarm, alpha=0.35)
+scatter = plt.scatter(X_plot[:,0], X_plot[:,1], c=y_plot,
+                      cmap=plt.cm.coolwarm, edgecolors='k', s=20)
+
+plt.title("KNN Decision Boundary (2D PCA)")
+plt.xlabel("PCA Component 1")
+plt.ylabel("PCA Component 2")
+
+# Legend for binary classes
+plt.legend(
+    handles=scatter.legend_elements()[0],
+    labels=["Negative (0)", "Positive (1)"],
+    title="Class"
+)
+
+plt.show()
