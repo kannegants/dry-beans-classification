@@ -1,0 +1,45 @@
+# =======================================
+# STEP 4: PCA – Variance Analysis & Reduction
+# =======================================
+
+# Full PCA
+pca_full = PCA(n_components=None)
+X_pca_full = pca_full.fit_transform(X_scaled)
+
+# Explained variance ratio
+explained_var = pca_full.explained_variance_ratio_
+
+# ----- Plot 1: Explained Variance Bar Graph -----
+plt.figure(figsize=(8,5))
+plt.bar(range(1, len(explained_var)+1), explained_var, color='orange', alpha=0.8)
+plt.xlabel('Principal Component')
+plt.ylabel('Explained Variance Ratio')
+plt.title('Explained Variance by Each Principal Component')
+plt.grid(axis='y', linestyle='--', alpha=0.6)
+plt.show()
+
+# ----- Plot 2: Cumulative Explained Variance -----
+cumulative_var = np.cumsum(explained_var)
+
+plt.figure(figsize=(8,5))
+plt.plot(range(1, len(cumulative_var)+1), cumulative_var, marker='o', color='orange')
+plt.xlabel('Number of Principal Components')
+plt.ylabel('Cumulative Explained Variance')
+plt.title('Cumulative Explained Variance Curve')
+plt.axhline(y=0.9, color='red', linestyle='--', label='90% Threshold')
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.legend()
+plt.show()
+
+# ----- Select number of components explaining >= 90% variance -----
+n_components = np.argmax(cumulative_var >= 0.90) + 1
+print(f"\nPCA Components required for ≥90% variance: {n_components}")
+
+# Running PCA again with the selected number of components
+pca = PCA(n_components=n_components)
+X_pca = pca.fit_transform(X_scaled)
+
+# Create PCA-based train/test split
+X_train_pca, X_test_pca, y_train_pca, y_test_pca = train_test_split(
+    X_pca, y, test_size=0.2, random_state=42, stratify=y
+)
