@@ -1,0 +1,84 @@
+# =======================================
+# STEP 7 — SVM Classifier with PCA (n=4)
+# =======================================
+
+# Train SVM on PCA-reduced data
+svm_model = SVC(kernel='rbf', C=1, gamma='scale', random_state=42)
+svm_model.fit(X_train_pca, y_train_pca)
+
+# Predictions
+y_pred_svm = svm_model.predict(X_test_pca)
+
+# ----- Evaluation -----
+print("\n=== SVM (PCA) Performance Summary ===")
+print("Train Accuracy:", accuracy_score(y_train_pca, svm_model.predict(X_train_pca)))
+print("Test Accuracy:", accuracy_score(y_test_pca, y_pred_svm))
+
+print("\nClassification Report:\n", classification_report(y_test_pca, y_pred_svm))
+
+# Confusion matrix
+cm_svm = confusion_matrix(y_test_pca, y_pred_svm)
+print("Confusion Matrix:\n", cm_svm)
+
+# Confusion Matrix Heatmap
+plt.figure(figsize=(5,4))
+sns.heatmap(cm_svm, annot=True, fmt='d', cmap='Oranges')
+plt.title("SVM (with PCA) Confusion Matrix")
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.show()
+
+# =======================================
+# SVM Decision Boundary (2D PCA)
+# =======================================
+
+# Use same PCA-2D data from KNN step
+# If needed, recompute:
+pca_2d = PCA(n_components=2)
+X_2d = pca_2d.fit_transform(X_scaled)
+
+# Subsample for plotting
+n_plot = min(3000, len(X_2d))
+idx = np.random.choice(len(X_2d), n_plot, replace=False)
+X_plot = X_2d[idx]
+y_plot = y.iloc[idx].values
+
+# Fit simplified SVM for visualization
+svm_vis = SVC(kernel='rbf', C=1, gamma='scale')
+svm_vis.fit(X_plot, y_plot)
+
+# Meshgrid creation
+x_min, x_max = X_plot[:,0].min() - 1, X_plot[:,0].max() + 1
+y_min, y_max = X_plot[:,1].min() - 1, X_plot[:,1].max() + 1
+
+xx, yy = np.meshgrid(
+    np.linspace(x_min, x_max, 300),
+    np.linspace(y_min, y_max, 300)
+)
+
+# Predict decision surface
+Z = svm_vis.predict(np.c_[xx.ravel(), yy.ravel()])
+Z = Z.reshape(xx.shape)
+
+# Plot decision boundary
+plt.figure(figsize=(8,6))
+plt.contourf(xx, yy, Z, cmap=plt.cm.coolwarm, alpha=0.35)
+
+scatter = plt.scatter(
+    X_plot[:,0], X_plot[:,1],
+    c=y_plot, cmap=plt.cm.coolwarm,
+    edgecolors='k', s=20
+)
+
+plt.title("SVM Decision Boundary (2D PCA)")
+plt.xlabel("PCA Component 1")
+plt.ylabel("PCA Component 2")
+
+# Legend
+plt.legend(
+    handles=scatter.legend_elements()[0],
+    labels=["Negative (0)", "Positive (1)"],
+    title="Class"
+)
+
+plt.show()
