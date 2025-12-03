@@ -1,0 +1,37 @@
+# =======================================
+# STEP 8 — ROC Curve Comparison
+# =======================================
+
+from sklearn.metrics import roc_curve, roc_auc_score
+
+plt.figure(figsize=(8,6))
+
+models = {
+    "Decision Tree": (dt_model, X_test, y_test),
+    "KNN (PCA)": (knn_model, X_test_pca, y_test_pca),
+    "SVM (PCA)": (svm_model, X_test_pca, y_test_pca)
+}
+
+for name, (model, X_t, y_t) in models.items():
+    # Use predict_proba if available
+    if hasattr(model, "predict_proba"):
+        y_prob = model.predict_proba(X_t)[:, 1]
+    else:
+        # For SVM
+        y_prob = model.decision_function(X_t)
+
+    # ROC curve
+    fpr, tpr, _ = roc_curve(y_t, y_prob)
+    auc_value = roc_auc_score(y_t, y_prob)
+
+    plt.plot(fpr, tpr, label=f"{name} (AUC = {auc_value:.4f})")
+
+# Reference diagonal
+plt.plot([0, 1], [0, 1], "k--")
+
+plt.title("ROC Curve Comparison (Decision Tree, KNN, SVM)")
+plt.xlabel("False Positive Rate")
+plt.ylabel("True Positive Rate")
+plt.legend()
+plt.grid(True, linestyle='--', alpha=0.4)
+plt.show()
